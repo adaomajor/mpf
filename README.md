@@ -20,6 +20,32 @@ Whether you're creating a small API, a blog, or a full web app, MPF provides a s
 - ✅ Composer ready
 
 ---
+## 📚 Documentation
+
+The official documentation for MPF is available online and continuously updated.
+
+You can learn everything from installation, routing, MVC usage, request handling, database models, and more.
+
+### 🔗 Access the documentation here:
+
+👉 [https://adaomajor.github.io/mpf](https://adaomajor.github.io/mpf)  
+*(Powered by VitePress)*
+
+If you're looking to contribute to the documentation or build it locally, visit the GitHub Docs repository:
+
+🔧 [https://github.com/adaomajor/mpf-docs](https://github.com/adaomajor/mpf-docs)
+
+### 📖 Topics covered:
+
+- Installation & Setup
+- Routing system
+- MVC Structure (Controllers, Models, Views)
+- Request & Response handling
+- Error handling
+- Configuration
+- Directory structure
+
+> MPF is still evolving. Contributions to documentation and examples are welcome!
 
 ## 📦 Installation
 
@@ -29,3 +55,11 @@ You can install MPF using Composer:
 ```bash
 composer create-project adaomajor/mpf my-app
 ```
+
+## 🐞 Feedback e Sugestões
+
+Found a bug or you want to request a new feature?  
+Go to [issues](https://github.com/adaomajor/mpf/issues) and leave you report or feedback!
+
+👍 All contribution are welcome!
+
