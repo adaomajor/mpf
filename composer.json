@@ -1,0 +1,24 @@
+{
+    "name": "adaomajor/mpf",
+    "description": "MINIMALIST PHP FRAMEWORK - build your apps by your own",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "MPF\\": "App/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Adao Major",
+            "email": "adaomajor01@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

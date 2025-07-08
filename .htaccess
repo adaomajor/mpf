@@ -1,0 +1,9 @@
+RewriteEngine On
+RewriteBase /
+
+#  ignore dir and files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# redirect everything to index.php
+RewriteRule ^(.+)$ index.php?route=$1 [L,QSA]

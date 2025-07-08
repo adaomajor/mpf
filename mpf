@@ -1,0 +1,256 @@
+<?php
+     /**
+    * ┌──────────────────────────────────────────────────────────────────────
+    * │                       MPF - CONTTROLLER - PREFIX                        
+    * ├──────────────────────────────────────────────────────────────────────
+    * │ 📌 Desc      : Auto generated controller by the command: create veiew 
+    * │ 👨 Author    : Adão Major (adaomajor)
+    * │ 🐱‍👤 github    : https://github.com/adaomajor                   
+    * │ 🔄 Version   : 1.0.0                                     
+    * │ 🧱 Framework : MPF Framework                                                                     
+    * └───────────────────────────────────────────────────────────────────────
+    *
+    * FOR MORE INFORMATION READ THE DOCUMENTATION
+    */
+
+	require __DIR__."/vendor/autoload.php";
+    $APP_PATH_PREFIX = "App/core/prefix";
+    function help(){
+        echo <<<HELP
+        \x1b[1;36m
+        \t╔══════════════════════════════════════════════════════╗
+        \t║                MPF Framework CLI v 1.0.0             ║
+        \t║           Minimal PHP Framework by adaomajor         ║
+        \t║            https://github.com/adaomajor/MPF          ║
+        \t╚══════════════════════════════════════════════════════╝
+        \x1b[0m
+        \x1b[1mUsage:\x1b[0m
+        \x1b[1;33m     php mpf <command>\x1b[0m
+
+        \x1b[1mAvailable Commands:\x1b[0m
+
+        \x1b[1;32m     help\x1b[0m        show this banner
+        \x1b[1;32m     start\x1b[0m       Starts the development server
+        \x1b[1;32m     create / delete\x1b[0m       dreate / delete a veiw, controller, model
+        \x1b[1;32m     Migrate\x1b[0m     Create database tables for your Models
+
+        \x1b[1mExamples:\x1b[0m
+        \x1b[1;33m     php mpf start 8080\x1b[0m
+        \x1b[1;33m     php mpf create  / delete  view Home\x1b[0m
+        \x1b[1;33m     php mpf create  / delete  controller User\x1b[0m
+        \x1b[1;33m     php mpf create  / delete model User\x1b[0m
+        \x1b[1;33m     php mpf migrate / migrate model\x1b[0m
+
+        \x1b[1;90mMPF is handcrafted by Adão Major — simple, clean and powerful.\x1b[0m
+        Happy coding with \x1b[1;36mMPF\x1b[0m! 🚀
+        HELP;
+    }
+    
+    function start(){
+        global $argv;
+        if(isset($argv[2]) && (int)$argv[2]){
+            system("php -S 127.0.0.1:".$argv[2]." index.php");;
+        }else{
+            echo "[x] something wrong with de chosen port";
+            echo "[!] usage: php mpf start <port>t";
+            exit(-1);
+        }
+    }
+    function view($viewName, $action){
+        global $APP_PATH_PREFIX;
+        $VIEW_PATH = __DIR__."/App/Views";
+        if($action == "create"){
+            echo "[*] creating view: ".$viewName."\n";
+            if(file_exists(realpath($VIEW_PATH."/".$viewName.".view.php"))){
+                echo "[!] a view with the name: ".$viewName." already exists\n";
+                exit(-1);
+            }
+            $viewContent = file_get_contents(realpath( $APP_PATH_PREFIX."/view.prefix"));
+            file_put_contents($VIEW_PATH."/".$viewName.".view.php", $viewContent);
+            echo "[*] view: ".$viewName." created!\n";
+        }else if($action == "del"){
+            echo "[*] deleting view: ".$viewName."\n";
+            if(file_exists(realpath($VIEW_PATH."/".$viewName.".view.php"))){
+                if(unlink(realpath($VIEW_PATH."/".$viewName.".view.php"))){
+                    echo "[*] deleted !!!\n";
+                }
+            }
+        }
+        return;
+    }
+    function controller($controllerName,$action){
+        global $APP_PATH_PREFIX;
+        $CONTROLLER_PATH = __DIR__."/App/Controller";
+        if($action == "create"){
+            echo "[*] creating controller: ".$controllerName."\n";
+            if(file_exists(realpath($CONTROLLER_PATH."/".$controllerName.".php"))){
+                echo "[!] a controller with the name: ".$controllerName." already exists\n";
+                exit(-1);
+            }
+            $controllerContent = file_get_contents(realpath( $APP_PATH_PREFIX."/controller.prefix"));
+            $controllerContent = str_replace("{CONTROLLER_NAME}", $controllerName, $controllerContent);
+            file_put_contents($CONTROLLER_PATH."/".$controllerName.".php", $controllerContent);
+            echo "[*] controller: ".$controllerName." created!\n";
+        }else if($action == "del"){
+            echo "[*] deleting controller: ".$controllerName."\n";
+            if(file_exists(realpath($CONTROLLER_PATH."/".$controllerName.".php"))){
+                if(unlink(realpath($CONTROLLER_PATH."/".$controllerName.".php"))){
+                    echo "[*] deleted !!!";
+                }
+            }
+        }
+        return;
+    }
+    function model($modelName, $action){
+        global $APP_PATH_PREFIX;
+        $MODEL_PATH = __DIR__."/App/Models";
+        if($action == "create"){
+            echo "[*] creating model: ".$modelName."\n";
+            if(file_exists(realpath($MODEL_PATH."/".$modelName.".php"))){
+                echo "[!] a model with the name: ".$modelName." already exists\n";
+                exit(-1);
+            }
+            $modelContent = file_get_contents(realpath( $APP_PATH_PREFIX."/model.prefix"));
+            $modelContent = str_replace("{MODEL_NAME}", $modelName, $modelContent);
+            $modelContent = str_replace("{model_table_name}", ucfirst($modelName), $modelContent);
+            file_put_contents($MODEL_PATH."/".$modelName.".php", $modelContent);
+            echo "[*] model: ".$modelName." created!\n";
+        }else if($action == "del"){
+            echo "[*] deleting model: ".$modelName."\n";
+            if(file_exists(realpath($MODEL_PATH."/".$modelName.".php"))){
+                if(unlink(realpath($MODEL_PATH."/".$modelName.".php"))){
+                    echo "[*] deleted !!!";
+                }
+            }
+        }
+        return;
+    }
+    function create(){
+        global $argv;
+        if(!isset($argv[2])){
+            echo "[*] create what, view, controller, model??\n";
+            exit(-1);
+        }
+        switch($argv[2]){
+            case "model":
+                if(isset($argv[3])){
+                    if(strtolower($argv[3]) == "user" ){
+                        echo "user is word key for MySql: try Users / users";
+                        exit(-1);
+                    }
+                    model(ucfirst($argv[3]), "create");
+                    return;
+                } 
+                echo "[*] where is the model name , ham??\n";
+                break;
+            case "view":
+                if(isset($argv[3])){
+                    view(ucfirst($argv[3]), "create");
+                    return;
+                } echo "[*] where is the view name , ham??\n";
+                break;
+            case "controller":
+                if(isset($argv[3])){
+                    controller(ucfirst($argv[3]), "create");
+                    return ;
+                } echo "[*] where is the controller name , ham??\n";
+                break;
+            default:
+                echo "[*] what the hell you trying to create\n";
+                return;
+        }
+    }
+    function del(){
+        global $argv;
+        if(!isset($argv[2])){
+            echo "[*] delete what, view, controller, model??\n";
+            exit(-1);
+        }
+        switch(strtolower($argv[2])){
+            case "model":
+                if(isset($argv[3])){
+                    model(ucfirst($argv[3]), "del");
+                    return;
+                } 
+                echo "[*] where is the model name , ham??\n";
+                break;
+            case "view":
+                if(isset($argv[3])){
+                    view(ucfirst($argv[3]), "del");
+                    return;
+                } echo "[*] where is the view name , ham??\n";
+                break;
+            case "controller":
+                if(isset($argv[3])){
+                    controller(ucfirst($argv[3]), "del");
+                    return ;
+                } echo "[*] where is the controller name , ham??\n";
+                break;
+            default:
+                echo "[*] what the hell you trying to delete\n";
+                return;
+        }
+    }
+
+
+    function Migrate($name = null){
+
+        $MODELS_PATH = __DIR__."/App/Models/";
+
+        echo "[!] migrate my delete all of your database info - [ CTRL + C ] to cancel...\n";
+        sleep(5);
+
+        if($name){
+            if(file_exists($MODELS_PATH.DIRECTORY_SEPARATOR.$name.".php")){
+                $className = "MPF\\Models\\".$name;
+                $model = new $className();
+                echo "[*] creating the table: ".$name."\n";
+                $model->up();
+                return;
+            }
+            echo "[!] no model with name: ".$name." was found";
+            return;
+        }
+
+        $models_file = scandir($MODELS_PATH);
+        foreach($models_file as $file){
+            if($file != "." && $file != ".." && is_file($MODELS_PATH.DIRECTORY_SEPARATOR.$file)){
+                $className = "MPF\\Models\\" . str_replace(".php","", $file);
+                $model = new $className();
+                echo "[*] creating the table: ".$model->getTable()."\n";
+                $model->up();
+            }
+        }
+
+    }
+
+    function mig(){
+        global $argv;
+        if(!isset($argv[2])){
+            Migrate();
+        }else{
+            Migrate($argv[2]);
+        }
+    }
+    $func = [
+        "start" => 'start', 
+        "help" => 'help',
+        "create" => 'create',
+        "delete" => 'del',
+        "del" => 'del',
+        "migrate" => 'mig'
+    ];
+
+    if($argc < 2){
+        echo "[!] No command line argumens\n";
+        echo "[!] type: php app help";
+        exit(-1);
+    }
+    $command = $argv[1];
+    if($func[$command] && is_callable($func[$command])){
+        call_user_func_array($func[$argv[1]],[]);
+    }else{
+        echo "[x] MPF command not found: ".$argv[1];
+        exit(-1);
+    }
+?>
