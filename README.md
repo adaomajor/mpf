@@ -28,7 +28,7 @@ You can learn everything from installation, routing, MVC usage, request handling
 
 ### 🔗 Access the documentation here:
 
-👉 [https://adaomajor.github.io/mpf](https://adaomajor.github.io/mpf)  
+👉 [https://adaomajor.github.io/](https://adaomajor.github.io)  
 *(Powered by VitePress)*
 
 If you're looking to contribute to the documentation or build it locally, visit the GitHub Docs repository:
