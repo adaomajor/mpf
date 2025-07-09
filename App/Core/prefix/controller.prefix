@@ -2,7 +2,7 @@
  
     /**
     * ┌──────────────────────────────────────────────────────────────────────
-    * │                       MPF - CONTTROLLER - PREFIX                        
+    * │                             MPF - CONTTROLLER                        
     * ├──────────────────────────────────────────────────────────────────────
     * │ 📌 Desc      : Auto generated controller by the command: create veiew 
     * │ 👨 Author    : Adão Major (adaomajor)
@@ -11,7 +11,6 @@
     * │ 🧱 Framework : MPF Framework                                                                     
     * └───────────────────────────────────────────────────────────────────────
     *
-    * FOR MORE INFORMATION READ THE DOCUMENTATION
     * Res::cookie(["name" => "adaomajor", "id"=> 100001]);
     * Res::header("AUTH_TOKEN: JWT_COOKIE_AUTH_TOKEN");
     * Res::json(["name" => "adaomajor"]); send json response
@@ -22,6 +21,7 @@
     * $user = ["name" => "adaomajor"];
     * $view::set('user', $user);
     * $view::render(); => render the view html with the data
+    * FOR MORE INFORMATION READ THE DOCUMENTATION
     */
 
     namespace MPF\Controller;

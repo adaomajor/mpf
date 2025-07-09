@@ -1,9 +1,9 @@
 <?php
      /**
     * ┌──────────────────────────────────────────────────────────────────────
-    * │                       MPF - CONTTROLLER - PREFIX                        
+    * │                                 M P F                      
     * ├──────────────────────────────────────────────────────────────────────
-    * │ 📌 Desc      : Auto generated controller by the command: create veiew 
+    * │ 📌 Desc      : mpf main file 
     * │ 👨 Author    : Adão Major (adaomajor)
     * │ 🐱‍👤 github    : https://github.com/adaomajor                   
     * │ 🔄 Version   : 1.0.0                                     
@@ -29,10 +29,11 @@
 
         \x1b[1mAvailable Commands:\x1b[0m
 
-        \x1b[1;32m     help\x1b[0m        show this banner
-        \x1b[1;32m     start\x1b[0m       Starts the development server
-        \x1b[1;32m     create / delete\x1b[0m       dreate / delete a veiw, controller, model
-        \x1b[1;32m     Migrate\x1b[0m     Create database tables for your Models
+        \x1b[1;32m     help\x1b[0m     Show this banner
+        \x1b[1;32m     start\x1b[0m    Starts the development server
+        \x1b[1;32m     create\x1b[0m   Create a veiw, controller, model
+        \x1b[1;32m     delete\x1b[0m   Delete a veiw, controller, model
+        \x1b[1;32m     Migrate\x1b[0m  Create database tables for your Models
 
         \x1b[1mExamples:\x1b[0m
         \x1b[1;33m     php mpf start 8080\x1b[0m
@@ -197,7 +198,7 @@
 
         $MODELS_PATH = __DIR__."/App/Models/";
 
-        echo "[!] migrate my delete all of your database info - [ CTRL + C ] to cancel...\n";
+        echo "[!] migrate may delete all of your database info - [ CTRL + C ] to cancel...\n";
         sleep(5);
 
         if($name){
