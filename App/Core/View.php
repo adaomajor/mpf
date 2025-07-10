@@ -25,7 +25,12 @@
         }
 
         public static function view($viewName){
-            return require_once VIEW_PATH.$viewName.".view.php";
+            ob_start();
+            $View = self::class;
+            $view = self::class;
+            require_once VIEW_PATH.$viewName.".view.php";
+            echo ob_get_clean();
+            return;
         }
         
         public static function render(){

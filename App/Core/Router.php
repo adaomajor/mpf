@@ -68,6 +68,8 @@
                 'jpg' => 'image/jpeg',
                 'jpeg' => 'image/jpeg',
                 'gif' => 'image/gif',
+                'ico' => 'image/ico',
+                'pdf' => 'application/pdf',
                 'svg' => 'image/svg+xml',
                 'woff' => 'font/woff',
                 'woff2' => 'font/woff2',
@@ -168,7 +170,18 @@
                 }
 
             }else{
-                throw new Exception("No Route With This Method: ".strtoupper($method));
+                if(isset($routes["fallback"])){
+                    if(is_callable($routes["fallback"])){
+                        call_user_func($routes["fallback"]);
+                        return;
+                    }
+                    Res::status(404);
+                    return View::view($routes['fallback']);
+                }else{
+                    Res::status(404);
+                    echo "404 page not found.";
+                    return;  
+                }
             }
         }
     }
