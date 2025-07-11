@@ -36,7 +36,7 @@
             return ((isset($pk) && $pk == true ? "INT PRIMARY KEY AUTO_INCREMENT NOT NULL" : ((isset($nullable)) ? "INT" : "INT NOT NULL").(isset($default) ? " DEFAULT '".$default."'" : "") ));
         }
         public static function char($length = 50, $nullable = null, $default = null){
-            return "VARCHAR(".$length.")".(isset($nullable) ? "" : " NOT NULL").(isset($default) ? "DEFAULT '".$default."'" : "");
+            return "VARCHAR(".$length.")".(isset($nullable) ? "" : " NOT NULL").(isset($default) ? " DEFAULT '".$default."'" : "");
         }
         public static function decimal($int = 10, $decimal = 2, $nullable = null, $default = null){
             return "DECIMAL(".$int.",". $decimal.")".(isset($nullable) ? "" : " NOT NULL").(isset($default) ? " DEFAULT '".$default."'" : "");
