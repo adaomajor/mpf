@@ -411,8 +411,10 @@
             $argsCount = count($args);
             if($argsCount == 2){
                 $this->query .= " LIMIT ".$args[0].",".$args[1];
+                $this->join .= " LIMIT ".$args[0].",".$args[1];
             } else if($argsCount == 1) {
                 $this->query .= " LIMIT ".$args[0];
+                $this->join .= " LIMIT ".$args[0];
             }else {
                 throw new Exception("limit must have one or two args: limit(lim, offset) || limit(lim)");
             }
@@ -508,6 +510,7 @@
                 }else{
                     $stmt->execute($this->Params);
                 }
+                $this->find = false;
                 return $stmt->fetchall();
             }catch(Exception $e){
                 return null;
@@ -530,7 +533,9 @@
                 }
                 
                 if(str_contains($type, "enum")){
-                    preg_match_all("/\'([a-zA-Z])\'/",$type, $enum);
+                    echo "temos um enum";
+                    preg_match_all("/'([^']+)'/",$type, $enum);
+                    var_dump($enum);
                     $en_ok = false;
                     foreach($enum[1] as $enumVal){
                         if($enumVal == $val){
@@ -555,11 +560,11 @@
                 foreach($values as $key => $val){
                     $stmt->bindValue(":".$key , $val );
                 }
-                $stmt->execute();     
+                $stmt->execute();  
                 return $this->find("*")->where(["id" => self::$DB->lastInsertId()])->exec()[0];
             }catch(Exception $e){
-                //return $e->getMessage();
-                return null;
+                return $e->getMessage();
+                //return null;
             }
         }
 
