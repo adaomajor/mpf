@@ -77,7 +77,7 @@
         <h4 >MINIMALIST PHP FRAMEWORK</h4>
         <h6 style="border-bottom: 5px solid #d1cecd; padding: 20px 0 20px 0; width: 80%;">made by: adaomajor</h6>
         <h2>WELCOME TO MPF</h2>
-        <a><button>learn📚</button></a>
+        <a href="https://adaomajor.github.io" target="_self"><button>learn📚</button></a>
         <p class="back-banner">🚀</p>
     </div>
 </body>
