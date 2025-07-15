@@ -9,16 +9,6 @@
     Router::get('/', function () {
         return View::view('Welcome');
     });
-
-    Router::get('/test', function () {
-        $u = Users::save([
-            "name" => "Adão Majadfasdfasdfr",
-            "email" => "adaomajor01@gmail.com",
-            "password" => "12345678"
-        ]);
-
-        Res::json($u);
-    });
     
     Router::fallback('404');
 
