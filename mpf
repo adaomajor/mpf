@@ -47,7 +47,28 @@
         HELP;
     }
     
+    function loadenv(){
+        if(!file_exists(__DIR__."/.env")){
+            throw new Exception("No .env file found: .env is what stores yours enviroment configurations");
+        }
+        $lines = file('.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach($lines as $line){
+            if(str_starts_with(trim($line),'#')) continue;
+
+            [$env_name, $env_value] = explode("=", $line);
+            trim($env_name);
+            trim($env_value);
+
+            $env_value = trim($env_value,"\"'");
+            
+            putenv("$env_name=$env_value");
+            $_ENV[$env_name] = $env_value;
+            $_SERVER[$env_name] = $env_value;
+        }
+    }
+
     function start(){
+        loadenv();
         global $argv;
         if(isset($argv[2]) && (int)$argv[2]){
             system("php -S 127.0.0.1:".$argv[2]." index.php");;
@@ -195,6 +216,7 @@
 
 
     function Migrate($name = null){
+        loadenv();
 
         $MODELS_PATH = __DIR__."/App/Models/";
 

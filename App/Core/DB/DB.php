@@ -1,29 +1,28 @@
 <?php
-    namespace MPF\Core\DB;
+    namespace MPF\Core\DBTRAIT;
     use PDO;
     use Exception;
 
-    require_once (__DIR__.'/../config.php');
-
-    class DB{
-        private static $instance = null;
-        private $connection;
+    trait DB{
+        private static $DB;
+        private static $connection;
         
-        private function __construct(){
+        private static function getConnection(){
             try{
-                $this->connection =  new PDO("mysql:host=".HOST.";dbname=".DB, USER, PASSWD);
-                $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                $this->connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                self::$connection =  new PDO("mysql:host=".$_ENV['DB_HOST'].";dbname=".$_ENV['DB_NAME'], $_ENV['DB_USER'], $_ENV['DB_PASSWD']);
+                self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                return self::$connection;
             }catch(Exception $Ex){
                 throw new Exception("Error: ".$Ex->getMessage());
             }
         }
 
-        public static function getConnection(){
-            if(self::$instance === null){
-                self::$instance = new DB();
+        public static function init(){
+            if(self::$DB === null){
+                self::$DB = self::getConnection();
             }
-            return self::$instance->connection;
+            //return self::$DB;
         }
     }
 ?>

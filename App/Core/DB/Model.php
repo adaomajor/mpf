@@ -1,15 +1,15 @@
 <?php
     namespace MPF\Core\DB;
-    require_once 'DatabaseTrait.php';
+    require_once 'DB.php';
     require_once 'helper.php';
     
-    use MPF\Database\DatabaseTrait;
     use Exception;
     use Helper;
+    use MPF\Core\DBTRAIT\DB;
     use PDO;
 
-    class Model extends Helper{
-        use DatabaseTrait;
+    class Model extends Helper {
+        use DB;
         protected $table = "";
         protected $fields = [];
 
