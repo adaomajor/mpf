@@ -200,27 +200,28 @@
             return $record;
         }
 
-        public function find($KEYWORDS = "*"){
-            if($this->find){
+        public static function find($KEYWORDS = "*"){
+            $instance = new static;
+            if($instance->find){
                 throw new Exception("you should just call ".__METHOD__." once in an execution");
             }
-            $this->query = "SELECT ";
-            $this->join .= "SELECT ";
+            $instance->query = "SELECT ";
+            $instance->join .= "SELECT ";
             if(is_array($KEYWORDS)){
                 foreach($KEYWORDS as $key){
-                    $this::GETCOL($key);
-                    $this->query .= " ".$this->table.".".$key.",";
-                    $this->join .= " ".$this->table.".".$key.",";
+                    $instance::GETCOL($key);
+                    $instance->query .= " ".$instance->table.".".$key.",";
+                    $instance->join .= " ".$instance->table.".".$key.",";
                 }
-                $this->query .= "FROM ".$this->table;
+                $instance->query .= "FROM ".$instance->table;
             }else{
-                $this->query .= $this->table.".".$KEYWORDS." FROM ".$this->table;
-                $this->join .= $this->table.".".$KEYWORDS.","; 
+                $instance->query .= $instance->table.".".$KEYWORDS." FROM ".$instance->table;
+                $instance->join .= $instance->table.".".$KEYWORDS.","; 
             }
-            $this->query = str_replace(",FROM", " FROM", $this->query);
-            $this->join = str_replace(",X", " ", $this->join);      
-            $this->find = true;
-            return $this;
+            $instance->query = str_replace(",FROM", " FROM", $instance->query);
+            $instance->join = str_replace(",X", " ", $instance->join);      
+            $instance->find = true;
+            return $instance;
         }
         public function where($values){
             if(!$this->find && !$this->update && !$this->joined){
@@ -519,14 +520,15 @@
                 return null;
             }
         }
-        public function save($values){
-            $SQL = "INSERT INTO ".$this->table."(";
+        public static function save($values){
+            $instance = new static;
+            $SQL = "INSERT INTO ".$instance->table."(";
             $VAL = "VALUES(";
             foreach($values as $key => $val){
-                if(!isset($this->fields[$key])){
-                    throw new Exception("undefined column $key in database model('".$this->table."')");
+                if(!isset($instance->fields[$key])){
+                    throw new Exception("undefined column $key in database model('".$instance->table."')");
                 }
-                $type = explode(" ",$this->fields[$key])[0];
+                $type = explode(" ",$instance->fields[$key])[0];
                 $type = trim($type);
 
                 if($type == "boolean"){
@@ -547,7 +549,7 @@
                         }
                     }
                     if($en_ok == false){
-                        throw new Exception("the value: ".$val." does not match any values for enumeration field: \n\t".$this->fields[$key]);
+                        throw new Exception("the value: ".$val." does not match any values for enumeration field: \n\t".$instance->fields[$key]);
                     }
                 }
                 $SQL .= $key.", ";
@@ -564,7 +566,7 @@
                     $stmt->bindValue(":".$key , $val );
                 }
                 $stmt->execute();  
-                return $this->find("*")->where(["id" => self::$DB->lastInsertId()])->exec()[0];
+                return $instance::find("*")->where(["id" => self::$DB->lastInsertId()])->exec()[0];
             }catch(Exception $e){
                 return $e->getMessage();
                 //return null;

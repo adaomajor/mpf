@@ -23,7 +23,7 @@
             
         public function __construct(){
             $this->fields = [
-                "id" => Model::int($pk = true),
+                "id" => Model::PK(),
                 "name" => Model::char(30, $nullable = null),
                 "email" => Model::char(70, $nullable = null),
                 "password" => Model::char(255, $nullable = null),
