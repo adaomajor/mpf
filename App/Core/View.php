@@ -2,8 +2,7 @@
     namespace MPF\Core;
 
     use Exception;
-
-    require_once 'config.php';
+    define('VIEW_PATH','App/Views/');
     class View{
         private static $view;
         private static $data;

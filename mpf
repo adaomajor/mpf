@@ -276,4 +276,3 @@
         echo "[x] MPF command not found: ".$argv[1];
         exit(-1);
     }
-?>

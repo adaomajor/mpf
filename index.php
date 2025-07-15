@@ -15,4 +15,3 @@
     
     Router::run();
     exit;
-?>
