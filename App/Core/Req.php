@@ -3,11 +3,11 @@
 
     class Req{
         public static function get($key){
-            return (isset($_GET[$key])) ? $_GET[$key] : null; 
+            return (isset($_GET[$key]) && !empty($_POST[$key])) ? $_GET[$key] : null; 
         }
 
         public static function post($key){
-            return (isset($_POST[$key])) ? $_POST[$key] : null;
+            return (isset($_POST[$key]) && !empty($_POST[$key])) ? $_POST[$key] : null;
         }
 
         public static function cookie($cookie){
