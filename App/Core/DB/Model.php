@@ -32,8 +32,11 @@
 
         private $plus = 0;
 
-        public static function int($pk = null, $nullable = null, $default = null){
-            return ((isset($pk) && $pk == true ? "INT PRIMARY KEY AUTO_INCREMENT NOT NULL" : ((isset($nullable)) ? "INT" : "INT NOT NULL").(isset($default) ? " DEFAULT '".$default."'" : "") ));
+        public static function PK(){
+            return "INT PRIMARY KEY AUTO_INCREMENT NOT NULL ";
+        }
+        public static function int($nullable = null, $default = null){
+            return (isset($nullable) ? "INT " : "INT NOT NULL ").(isset($default) ? " DEFAULT '".$default."'" : "");
         }
         public static function char($length = 50, $nullable = null, $default = null){
             return "VARCHAR(".$length.")".(isset($nullable) ? "" : " NOT NULL").(isset($default) ? " DEFAULT '".$default."'" : "");
