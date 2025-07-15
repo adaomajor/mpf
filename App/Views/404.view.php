@@ -51,7 +51,7 @@
         <h4 >MINIMALIST PHP FRAMEWORK</h4>
         <h6 style="border-bottom: 4px solid gray; padding: 20px 0 20px 0; width: 80%;">made by: adaomajor</h6>
         <h2>404</h2>
-        <a href="/" target="_self"><h2>404</h2></a>
+        <a href="https://adaomajor.github.io" target="_self"><h2>LEARN</h2></a>
         <p class="back-banner">👽</p>
     </div>
 </body>
