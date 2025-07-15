@@ -77,6 +77,9 @@
                 'eot' => 'application/vnd.ms-fontobject',
                 'html' => 'text/html',
                 'json' => 'application/json',
+                'php' => 'text/plain',
+                'php5' => 'text/plain',
+                'phtml' => 'text/plain',
             ];
 
             if($method == "get" && isset($routes['static'])){

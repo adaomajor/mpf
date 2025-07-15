@@ -4,7 +4,6 @@
     use MPF\Core\Router;
     use MPF\Core\Res;
     use MPF\Core\View;
-    use MPF\Models\Users;
 
     Router::get('/', function () {
         return View::view('Welcome');
