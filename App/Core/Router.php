@@ -52,7 +52,7 @@
         }
 
         public static function run(){
-            Res::header('x-powered-by: mpf-amj');
+            Res::header('x-powered-by: '.getenv('X_POWERED_BY'));
             global $routes;
             $method = strtolower($_SERVER['REQUEST_METHOD']);
 

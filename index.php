@@ -6,12 +6,12 @@
     use MPF\Core\View;
 
     Router::get('/', function () {
-        return View::view('Welcome');
+        return View::view('welcome');
     });
     
     Router::fallback('404');
 
-    Router::static("/public/");
+    Router::static("/public/"); 
     
     Router::run();
-    exit;
+ 

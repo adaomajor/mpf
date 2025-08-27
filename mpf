@@ -256,7 +256,8 @@
         }
     }
     $func = [
-        "start" => 'start', 
+        "start" => 'start',
+        "run" => 'start',
         "help" => 'help',
         "create" => 'create',
         "delete" => 'del',

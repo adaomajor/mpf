@@ -16,21 +16,29 @@
         private $query;
         private $Params = [];
 
-        private $pk = false;
-
         private $find = false;
         private $where = false;
         private $or = false;
         private $order = false;
         private $limit = false;
-
+        private $count = false;
         private $update = false;
-
+        private $delete = false;
+        private $on = false;
         private $joined = false;
+        private $plus = 0;
         private $jTable;
         private $join = "";
 
-        private $plus = 0;
+        private $SELECT = [];
+        private $SELECT_JOIN = [];
+        private $JOINS = [];
+        private $WHERE = "";
+        private $UPDATE = "";
+
+        private $ORDER = "";
+        private $LIMIT = "";
+
 
         public static function PK(){
             return "INT PRIMARY KEY AUTO_INCREMENT NOT NULL ";
@@ -91,7 +99,7 @@
                 throw new Exception("the argument for Model::FK must an array of the elements: ['Model','Column']");
             }
 
-            $referenceTable = self::loadclass($args[0]);
+            $referenceTable = self::loadclass(ucfirst($args[0]));
             $type = $referenceTable::GETCOL($args[1]);
             $type = explode(" ",$type)[0];
             $type = trim($type);
@@ -159,45 +167,28 @@
             return ;
         }
 
-        public function delete($values){
-            if($this->find){
+        public static function delete($values){
+            $instance = new static;
+            if($instance->find){
                 throw new Exception("you can not call ".__METHOD__." after find has been called");
             }
             if(!is_array($values)){
                 throw new Exception("the arguments for ".__METHOD__." or must be an array ['id' => 1]");
             }
-            
-            $this->query = "DELETE FROM ".$this->table." WHERE ";
-            if(count($values) > 1){
-                $ands = (count($values) - 1);
-                foreach( $values as $key => $value){
-                    $this::GETCOL($key);
-                    $this->query .= "".$key."=:".$key.(($ands > 0) ? " AND ": "");
-                    $this->Params[':'.$key] = $value;
-                    $ands--;
-                }
-            }else{
-                foreach( $values as $key => $value){
-                    $this::GETCOL($key);
-                    $this->query .= " ".$key."=:".$key;
-                    $this->Params[":".$key] = $value;
-                }
+            if(count($values) > 1){ $ands = count($values) -1; }
+            foreach( $values as $key => $value){
+                $instance::GETCOL($key);
+                $qkey = $instance->table.".".$key;
+                $key = $instance->table."_".$key;
+                $instance->WHERE .= "".$qkey."=:".$key.(isset($ands) && $ands > 0 ? " AND ": "");
+                $instance->Params[':'.$key] = $value;
+                if(isset($ands)) { $ands--; } 
             }
 
-            $query = str_replace("DELETE FROM" , "SELECT * FROM ", $this->query);
-
-            self::init();
-            $select = self::$DB->prepare($query);
-            $select->execute($this->Params);
-            $record = $select->fetch(PDO::FETCH_ASSOC);
-            
-            if(!$record){
-                return null;
-            }
-
-            $stmt = self::$DB->prepare($this->query);
-            $stmt->execute($this->Params);
-            return $record;
+            $instance->plus++;
+            $instance->where = true;
+            $instance->delete = true;
+            return $instance;
         }
 
         public static function find($KEYWORDS = "*"){
@@ -205,24 +196,39 @@
             if($instance->find){
                 throw new Exception("you should just call ".__METHOD__." once in an execution");
             }
-            $instance->query = "SELECT ";
-            $instance->join .= "SELECT ";
             if(is_array($KEYWORDS)){
                 foreach($KEYWORDS as $key){
                     $instance::GETCOL($key);
-                    $instance->query .= " ".$instance->table.".".$key.",";
-                    $instance->join .= " ".$instance->table.".".$key.",";
+                    //$instance->query .= " ".$instance->table.".".$key.",";
+                    array_push($instance->SELECT, $instance->table.".".$key);
                 }
-                $instance->query .= "FROM ".$instance->table;
             }else{
-                $instance->query .= $instance->table.".".$KEYWORDS." FROM ".$instance->table;
-                $instance->join .= $instance->table.".".$KEYWORDS.","; 
+                //$instance->query .= $instance->table.".".$KEYWORDS." FROM ".$instance->table;
+                array_push($instance->SELECT, $instance->table.".".$KEYWORDS);
             }
-            $instance->query = str_replace(",FROM", " FROM", $instance->query);
-            $instance->join = str_replace(",X", " ", $instance->join);      
             $instance->find = true;
             return $instance;
         }
+
+        public static function count($KEYWORDS = "*"){
+            $instance = new static;
+            if($instance->find){
+                throw new Exception("you should just call ".__METHOD__." once in an execution");
+            }
+            if(is_array($KEYWORDS)){
+                foreach($KEYWORDS as $key){
+                    $instance::GETCOL($key);
+                    //$instance->query .= " ".$instance->table.".".$key.",";
+                    array_push($instance->SELECT, "count(".$key.")");
+                }
+            }else{
+                //$instance->query .= $instance->table.".".$KEYWORDS." FROM ".$instance->table;
+                array_push($instance->SELECT, "count(".$KEYWORDS.")");
+            }
+            $instance->count = true;
+            return $instance;
+        }
+
         public function where($values){
             if(!$this->find && !$this->update && !$this->joined){
                 throw new Exception("you should call ".__METHOD__." after App\Core\DB\Model::{find, update, join} has been called");
@@ -236,86 +242,64 @@
             if(!is_array($values)){
                 throw new Exception("the arguments for where must be an array ['id' => 1]");
             }
+            $this->WHERE .= " WHERE ";
+            $ands = count($values) - 1; 
+            foreach( $values as $key => $val){
+                $this::GETCOL($key);
+                $qkey = $this->table.".".$key;
+                $key = ":".$this->table."_".$key.(($this->plus > 0) ? $this->plus : "");
 
-            if($this->joined){
-                foreach($values as $Model => $fields){
-                    $this->join = str_replace("<END>", " AND ", $this->join);
-                    $classModel = self::loadclass($Model);
-                    if(!is_array($values[$Model])){
-                        throw new Exception("the argument for where must be an array of arrays when calling join: [ 'Model' => ['field' => value...], ...]");
-                    }
-
-                    if(count($values[$Model]) > 1){
-                        $ands = (count($values[$Model]) - 1);
-                        foreach($values[$Model] as $key => $value){
-                            $classModel::GETCOL($key);
-                            $keyVal = $key;
-                            if(isset($this->Params[":".$key]) || isset($this->Params[":".$key.$this->plus])){
-                                $this->plus++;
-                                $keyVal = $key.$this->plus;
-                            }
-                            $this->join .= $Model.".".$key."=:".$keyVal.(($ands > 0) ? " AND ": "");
-                            $this->Params[':'.$keyVal] = $value;
-                            $ands--;
-                        }
+                if(is_array($val)){
+                    if($val[0] === "%"){
+                        $this->WHERE .= $qkey." LIKE \"%".$val[1]."%\" ";
                     }else{
-                        foreach($values[$Model] as $key => $value){
-                            $classModel::GETCOL($key);
-                            $keyVal = $key;
-                            if(isset($this->Params[":".$key]) || isset($this->Params[":".$key.$this->plus])){
-                                $this->plus++;
-                                $keyVal = $key.$this->plus;
-                            }
-                            $this->join .= $Model.".".$key."=:".$keyVal;
-                            $this->Params[':'.$keyVal] = $value;
-                        }
+                        $this->WHERE .= $qkey." ".$val[0]." ".$key;
+                        $this->Params[$key] = $val[1];
                     }
-                    $this->join .= " <END> ";
+                }else{
+                    $this->Params[$key] = $val;
+                    $this->WHERE .= $qkey." = ".$key;
                 }
-                $this->join = str_replace("<END>", "  ", $this->join);
-                $this->where = true;
-                return $this;
+                $this->WHERE .= ($ands > 0 ? " AND " : "");
+                $ands--;    
             }
 
-            $this->query .= " WHERE ";
-            if(count($values) > 1){
-                $ands = (count($values) - 1);
-                foreach( $values as $key => $value){
-                    $this::GETCOL($key);
-                    $plus = 0;
-                    if($this->update){
-                        $plus++;
-                    }
-                    if(isset($this->Params[":".$key])){
-                        $this->Params[":".$key.$plus] = $value;
-                        $keyVal = $key.$plus;
-                        $this->query .= $this->table.".".$key."=:".$keyVal.(($ands > 0) ? " AND ": "");
-                        $this->Params[':'.$keyVal] = $value;
-                    }else{
-                        $this->query .= $this->table.".".$key."=:".$key.(($ands > 0) ? " AND ": "");
-                        $this->Params[':'.$key] = $value;
-                    }
-                    $ands--;
-                }
-            }else{
-                foreach( $values as $key => $value){
-                    $this::GETCOL($key);
-                    $plus = 0;
-                    if($this->update){
-                        $plus++;
-                    }
-                    if(isset($this->Params[":".$key])){
-                        $this->Params[":".$key.$plus] = $value;
-                        $keyVal = $key.$plus;
-                        $this->query .= $this->table.".".$key."=:".$keyVal;
-                        $this->Params[':'.$keyVal] = $value;
-                    }else{
-                        $this->query .= " ".$this->table.".".$key."=:".$key;
-                        $this->Params[":".$key] = $value;
-                    }
-                }
-            }
+            $this->plus++;
             $this->where = true;
+            return $this;
+        }
+        public function and($values){
+            if($this->order){
+                throw new Exception("you can not call ".__METHOD__." after order");
+            }
+            if(!$this->where || $this->or){
+                throw new Exception("you should call ".__METHOD__." after App\Core\DB\Model::{where | or} has been called");
+            }
+            if(!is_array($values)){
+                throw new Exception("the arguments for or must be an array ['id' => 1]");
+            }
+            $this->WHERE .= " AND ";
+            $ands = count($values) - 1;
+            foreach( $values as $key => $val){
+                $this::GETCOL($key);
+                $qkey = $this->table.".".$key;
+                $key = ":".$this->table."_".$key.(($this->plus > 0) ? $this->plus : "");
+
+                if(is_array($val)){
+                    if($val[0] === "%"){
+                        $this->WHERE .= $qkey." LIKE \"%".$val[1]."%\" ";
+                    }else{
+                        $this->WHERE .= $qkey." ".$val[0]." ".$key;
+                        $this->Params[$key] = $val[1];
+                    }
+                }else{
+                    $this->Params[$key] = $val;
+                    $this->WHERE .= $qkey." = ".$key;
+                }
+                $this->WHERE .= ($ands > 0 ? " AND " : "");
+                $ands--;
+            }
+            $this->plus++;
             return $this;
         }
         public function or($values){
@@ -331,62 +315,32 @@
             if(!is_array($values)){
                 throw new Exception("the arguments for or must be an array ['id' => 1]");
             }
-
-            if($this->joined){
-                foreach($values as $Model => $fields){
-                    $classModel = self::loadclass($Model);
-                    if(!is_array($values[$Model])){
-                        throw new Exception("the argument for where must be an array of arrays when calling join: [ 'Model' => ['field' => value...], ...]");
-                    }
-                    if(count($values[$Model]) > 1){
-                        $ands = (count($values[$Model]) - 1);
-                        foreach($values[$Model] as $key => $value){
-                            $classModel::GETCOL($key);
-                            $keyVal = $key;
-                            if(isset($this->Params[":".$key]) || isset($this->Params[":".$key.$this->plus])){
-                                $this->plus++;
-                                $keyVal = $key.$this->plus;
-                            }
-                            $this->join .= " OR ".$Model.".".$key."=:".$keyVal;
-                            $this->Params[':'.$keyVal] = $value;
-                            $ands--;
-                        }
-                    }else{
-                        foreach($values[$Model] as $key => $value){
-                            $classModel::GETCOL($key);
-                            $keyVal = $key;
-                            if(isset($this->Params[":".$key]) || isset($this->Params[":".$key.$this->plus])){
-                                $this->plus++;
-                                $keyVal = $key.$this->plus;
-                            }
-                            $this->join .= " OR ".$Model.".".$key."=:".$keyVal;
-                            $this->Params[':'.$keyVal] = $value;
-                        }
-                    }
-                }
-                $this->or = true;
-                return $this;
-            }
-            foreach( $values as $key => $value){
+            $this->WHERE .= " OR ";
+            $ands = count($values) - 1;
+            foreach( $values as $key => $val){
                 $this::GETCOL($key);
-                $plus = 1;
-                if($this->update){
-                    $plus++;
-                }
-                if(isset($this->Params[":".$key])){
-                    $this->Params[":".$key.$plus] = $value;
-                    $keyVal = $key.$plus;
-                    $this->query .= " OR ".$this->table.".".$key."=:".$keyVal;
+                $qkey = $this->table.".".$key;
+                $key = ":".$this->table."_".$key.(($this->plus > 0) ? $this->plus : "");
+
+                if(is_array($val)){
+                    if($val[0] === "%"){
+                        $this->WHERE .= $qkey." LIKE \"%".$val[1]."%\" ";
+                    }else{
+                        $this->WHERE .= $qkey." ".$val[0]." ".$key;
+                        $this->Params[$key] = $val[1];
+                    }
                 }else{
-                    $this->query .= " OR ".$this->table.".".$key."=:".$key;
-                    $this->Params[":".$key] = $value;
+                    $this->Params[$key] = $val;
+                    $this->WHERE .= $qkey." = ".$key;
                 }
+                $this->WHERE .= ($ands > 0 ? " AND " : "");
+                $ands--;
             }
-            $this->or = true;
+            $this->plus++;
             return $this;
         }
 
-        public function order($column, $asc_desc = "DESC"){
+        public function order($model_column, $ord = -1){
             if(!$this->find){
                 throw new Exception("you should just call ".__METHOD__." after App\Core\DB\Model::find() has been called");
             }
@@ -396,11 +350,23 @@
             if($this->limit){
                 throw new Exception("you can not call ".__METHOD__." after App\Core\DB\Model::limit() has been called");
             }
-            if(strtoupper($asc_desc) != "ASC" && strtoupper($asc_desc) != "DESC"){
-                throw new Exception(" the second argument for order must be either asc or desc");
+            if($ord != 1 && $ord != -1){
+                throw new Exception(" the second argument for order must be either 1 or -1");
             }
-            $this::GETCOL($column);
-            $this->query .= " ORDER BY ".$column." ".strtoupper($asc_desc);
+        
+            if(is_array($model_column)){
+                $model = $model_column[0];
+                $col = $model_column[1];
+                $classModel = self::loadclass(ucfirst($model));
+                $classModel::GETCOL($col);
+                $st = $model.".".$col;
+
+            }else{
+                $this::GETCOL($model_column);
+                $st = $this->table.".".$model_column;
+            }
+
+            $this->ORDER .= " ORDER BY ".$st." ".(($ord == 1) ? " ASC " : " DESC ");
             $this->order = true;
             return $this;
         }
@@ -409,16 +375,11 @@
             if($this->limit){
                 throw new Exception("you should just call ".__METHOD__." once in an execution");
             }
-            // if(!$this->where){
-            //     throw new Exception("you should call ".__METHOD__." after App\Core\DB\Model::where has been called");
-            // }
             $argsCount = count($args);
             if($argsCount == 2){
-                $this->query .= " LIMIT ".$args[0].",".$args[1];
-                $this->join .= " LIMIT ".$args[0].",".$args[1];
+                $this->LIMIT .= " LIMIT ".$args[0].",".$args[1];
             } else if($argsCount == 1) {
-                $this->query .= " LIMIT ".$args[0];
-                $this->join .= " LIMIT ".$args[0];
+                $this->LIMIT .= " LIMIT ".$args[0];
             }else {
                 throw new Exception("limit must have one or two args: limit(lim, offset) || limit(lim)");
             }
@@ -426,38 +387,32 @@
             return $this;
         }
 
-        public function update($values){
-            if($this->update){throw new Exception("you should just call ".__METHOD__." once in an execution");}
-            if($this->find){ throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::find has been called");}
-            if($this->where){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::where has been called");}
-            if($this->or){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::or has been called");}
-            if($this->order){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::order has been called");}
-            if($this->limit){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::limit has been called");}
+        public static function update($values){
+            $instance = new static;
+            if($instance->update){throw new Exception("you should just call ".__METHOD__." once in an execution");}
+            if($instance->find){ throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::find has been called");}
+            if($instance->where){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::where has been called");}
+            if($instance->or){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::or has been called");}
+            if($instance->order){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::order has been called");}
+            if($instance->limit){throw new Exception("you shouldn't call ".__METHOD__." after App\Core\DB\Model::limit has been called");}
             if(!is_array($values)){ throw new Exception("the arguments for where must be an array ['id' => 1]");}
-            $this->query .="UPDATE ".$this->table." SET ";
+            $instance->UPDATE =" UPDATE ".$instance->table." SET ";
             
-            if(count($values) > 1){
-                $commas = (count($values) - 1);
-                foreach( $values as $key => $value){
-                    $this::GETCOL($key);
-                    $this->query .= $this->table.".".$key."=:".$key.(($commas > 0) ? " , ": "");
-                    $this->Params[':'.$key] = $value;
-                    $commas--;
-                }
-            }else{
-                foreach( $values as $key => $value){
-                    $this::GETCOL($key);
-                    $this->query .= " ".$this->table.".".$key."=:".$key;
-                    $this->Params[":".$key] = $value;
-                }
+            $commas = count($values) - 1 ;
+            foreach( $values as $key => $value){
+                $instance::GETCOL($key);
+                $instance->UPDATE .= $instance->table.".".$key."=:".$key.($commas > 0 ? " , ": "");
+                $instance->Params[':'.$key] = $value;
+                $commas--;
             }
-            $this->update = true;
-            return $this;
+            $instance->plus++;
+            $instance->update = true;
+            return $instance;
         }
 
         public function join($table, $columns){
             if(!$this->find){ throw new Exception("you should call ".__METHOD__." after App\Core\DB\Model::find() has been called");}
-            if($this->joined){ throw new Exception("you can only call ".__METHOD__." once in an execution");}
+            // if($this->joined){ throw new Exception("you can only call ".__METHOD__." again after where has been called again");}
             if($this->update){ throw new Exception("you can not call ".__METHOD__." after App\Core\DB\Model::update() has been called");}
             if($this->where){ throw new Exception("you can not call ".__METHOD__." after App\Core\DB\Model::where() has been called");}
             if($this->or){ throw new Exception("you can not call ".__METHOD__." after App\Core\DB\Model::or() has been called");}
@@ -471,51 +426,192 @@
                 throw new Exception(__METHOD__." second argument must be array ['col','col'...]");
             }
 
-            $join = "FROM ".$this->table." INNER join ".$this->jTable." ON ";
-            $JOINS = "";
             foreach($columns as $col){
                 $jModel::GETCOL($col);
-                $JOINS .= " ".$this->jTable.".".$col.",";
+                array_push($this->SELECT_JOIN, $this->jTable.".".$col);
             }
-
-            $this->join .= str_replace(",FROM ", " FROM ", $JOINS.$join);
+            $JOIN = " INNER JOIN ".$this->jTable." ON ";
+            $this->JOINS = array_merge($this->JOINS, [$JOIN]);
             $this->joined = true;
             return $this;
         }
 
+        public function on($values){
+            if(!is_array($values)){  throw new Exception(__METHOD__." second argument must be array ['table'=> ['col' => 'val'...]"); }
+            
+            $JOIN = " ";
+            if($this->joined){
+                $ands = count($values) - 1;
+                foreach($values as $Model => $vals){
+                    $classModel = self::loadclass(ucfirst($Model));
+                    $ands_ = count($vals) - 1;
+                    foreach($vals as $key => $val){
+                        if(is_array( $val)){
+
+                            if($val[0] === "<" || $val[0] === "<=" || $val[0] === ">" ||
+                               $val[0] === ">=" || $val[0] === "%"){
+                                $classModel::GETCOL($key);
+                                $qkey = $classModel->table.".".$key;
+                                $key = ":".$classModel->table."_".$key.(($this->plus > 0) ? $this->plus : "");
+                                $JOIN .= $qkey." ".$val[0]." ".$key." ";
+                                $this->Params[$key] = $val[1];
+
+                            }else if(count($val) == 2){
+                                $aclassModel = self::loadclass(ucfirst($val[0]));
+                                $aclassModel::GETCOL($val[1]);
+                                $qkey = $classModel->table.".".$key;
+                                $JOIN .= $qkey." = ".$val[0].".".$val[1];
+                            }else{
+                                throw new Exception("When relating tables the arguments for field must be an array or two elemetns => ['Model', 'Col']");
+                            }
+                        }else{
+                            $classModel::GETCOL($key);
+                            $qkey = $classModel->table.".".$key;
+                            $key = ":".$classModel->table."_".$key.(($this->plus > 0) ? $this->plus : "");
+                            $this->Params[$key] = $val;
+                            $JOIN .= $qkey." = ".$key." ";         
+                        }
+                        $JOIN .= ( $ands_ > 0 ? " AND " : "");
+                        $ands_--;
+                    }
+
+                    $JOIN .= ($ands > 0 ? " AND " : "");
+                    $ands--;
+                    $this->plus++;
+                }
+                $this->JOINS = array_merge($this->JOINS, [$JOIN]);
+
+                $this->join = false;
+                $this->on = true;
+                $this->plus++;
+                return $this;
+            }
+        }
+
+        public function onor($values){
+            if(!is_array($values)){  throw new Exception(__METHOD__." second argument must be array ['col'=>'val'...]"); }
+            
+            $JOIN = "";
+            if($this->joined){
+                $JOIN .= " OR ";
+                $ands = count($values) - 1;
+                foreach($values as $Model => $vals){
+                    $classModel = self::loadclass(ucfirst($Model));
+                    $ands_ = count($vals) - 1;
+                    foreach($vals as $key => $val){
+                        if(is_array( $val)){
+                            if($val[0] === "<" || $val[0] === "<=" || $val[0] === ">" ||
+                               $val[0] === ">=" || $val[0] === "%"){
+                                $classModel::GETCOL($key);
+                                $qkey = $classModel->table.".".$key;
+                                $key = ":".$classModel->table."_".$key.(($this->plus > 0) ? $this->plus : "");
+                                $JOIN .= $qkey." ".$val[0]." ".$key." ";
+                                $this->Params[$key] = $val[1];
+
+                            }else if(count($val) == 2){
+                                $aclassModel = self::loadclass(ucfirst($val[0]));
+                                $aclassModel::GETCOL($val[1]);
+                                $qkey = $classModel->table.".".$key;
+                                $JOIN .= $qkey." = ".$val[0].".".$val[1];
+                            }else{
+                                throw new Exception("When relating tables the arguments for field must be an array or two elemetns => ['Model', 'Col']");
+                            }
+                        }else{
+                            $classModel::GETCOL($key);
+                            $qkey = $classModel->table.".".$key;
+                            $key = ":".$classModel->table."_".$key.(($this->plus > 0) ? $this->plus : "");
+                            $this->Params[$key] = $val;
+                            $JOIN .= $qkey." = ".$key." ";         
+                        }
+                        $JOIN .= ( $ands_ > 0 ? " AND " : "");
+                        $ands_--;
+                    }
+
+                    $JOIN .= ($ands > 0 ? " AND " : "");
+                    $ands--; 
+                    $this->plus++;
+                }
+                $this->JOINS = array_merge($this->JOINS, [$JOIN]);
+
+                $this->join = false;
+                $this->on = true;
+                $this->plus++;
+                return $this;
+            }
+        }
+
         public function exec(){
-            if(!$this->find && !$this->update && !$this->joined){
+            if(!$this->count && !$this->find && !$this->update && !$this->joined && !$this->delete){
                 throw new Exception("you should just can call exec() after run find() or update()");
             }
-            self::init();
-            
-            if($this->update){
-                try{
-                    $stmt = self::$DB->prepare($this->query);
-                    return $stmt->execute($this->Params);
-                }catch(Exception $e){
+
+            $QUERY = "";
+            if($this->count){
+                $QUERY = "SELECT ";
+                $commas = (count($this->SELECT) - 1);
+                foreach ($this->SELECT as $col) {
+                    $QUERY .= $col.(($commas > 0) ? ", " : "");
+                    $commas--;
+                }
+                $QUERY .= " FROM ".$this->table." "; 
+            }else if($this->joined){
+                $ALL_SELECT = array_merge($this->SELECT, $this->SELECT_JOIN);
+                $QUERY = "SELECT ";
+                $commas = (count($ALL_SELECT) - 1);
+                foreach ($ALL_SELECT as $col) {
+                    $QUERY .= $col.(($commas > 0) ? ", " : "");
+                    $commas--;
+                }
+                $QUERY .= " FROM ".$this->table." "; 
+
+                foreach ($this->JOINS as $val){
+                    $QUERY .= " ".$val." ";
+                }
+                if($this->where){
+                    $QUERY .= $this->WHERE;
+                }
+                if($this->order){
+                    $QUERY .= $this->ORDER;
+                }
+                if($this->limit){
+                    $QUERY .= $this->LIMIT;
+                }      
+            }else if($this->delete){
+                $QUERY .= "DELETE FROM ".$this->table." WHERE ";
+                $QUERY .= $this->WHERE;
+                $query = str_replace("DELETE FROM" , "SELECT * FROM ", $QUERY);
+
+                self::init();
+
+                $select = self::$DB->prepare($query);
+                $select->execute($this->Params);
+                $record = $select->fetchall(PDO::FETCH_ASSOC);
+                
+                if(!$record){
                     return null;
                 }
+
+                $stmt = self::$DB->prepare($QUERY);
+                $stmt->execute($this->Params);
+                return $record;
+            }else if($this->update){
+                $QUERY .= $this->UPDATE;
+                if(!$this->where){ throw new Exception("Filters are needed [ where | or ]"); }
+                $QUERY .= $this->WHERE;
+            }else{
+                $QUERY = "SELECT ".$this->query;
+                $QUERY .= $this->WHERE;
             }
 
-            if($this->joined){
-                try{
-                    $stmt = self::$DB->prepare($this->join);
-                    $stmt->execute($this->Params);
-                    return $stmt->fetchall();
-                }catch(Exception $e){
-                    return null;
-                }
-            }
+            self::init();
             try{   
-                $stmt = self::$DB->prepare($this->query);
+                $stmt = self::$DB->prepare($QUERY);
                 if(empty($this->Params)){ 
                     $stmt->execute(); 
                 }else{
                     $stmt->execute($this->Params);
                 }
-                $this->find = false;
-                return $stmt->fetchall();
+                return $stmt->fetchall(PDO::FETCH_ASSOC);
             }catch(Exception $e){
                 return null;
             }
@@ -538,9 +634,7 @@
                 }
                 
                 if(str_contains($type, "enum")){
-                    echo "temos um enum";
                     preg_match_all("/'([^']+)'/",$type, $enum);
-                    var_dump($enum);
                     $en_ok = false;
                     foreach($enum[1] as $enumVal){
                         if($enumVal == $val){
@@ -565,18 +659,34 @@
                 foreach($values as $key => $val){
                     $stmt->bindValue(":".$key , $val );
                 }
-                $stmt->execute();  
-                return $instance::find("*")->where(["id" => self::$DB->lastInsertId()])->exec()[0];
+                $stmt->execute();
+                $instance->save = true;
+                return $instance::find()->where(["id" => self::$DB->lastInsertId()])->exec()[0];
             }catch(Exception $e){
-                return $e->getMessage();
-                //return null;
+                //return $e->getMessage();
+                return null;
             }
         }
-
         public function RawQuery($query){
             self::init();
             $stmt = self::$DB->query($query);
             return $stmt->fetchall();
+        }
+
+        public static function gt($number){
+            return [">", $number];
+        }
+        public static function gte($number){
+            return [">=", $number];
+        }
+        public static function lt($number){
+            return ["<", $number];
+        }
+        public static function lte($number){
+            return ["<=", $number];
+        }
+        public static function like($string){
+            return ["%", $string]; ;
         }
     }
 ?>
