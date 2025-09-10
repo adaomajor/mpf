@@ -667,7 +667,7 @@
                 return null;
             }
         }
-        public function RawQuery($query){
+        public static function RawQuery($query){
             self::init();
             $stmt = self::$DB->query($query);
             return $stmt->fetchall();
