@@ -15,8 +15,9 @@
 
 	require __DIR__."/vendor/autoload.php";
     $APP_PATH_PREFIX = "App/core/prefix";
-    function help(){
-        echo <<<HELP
+
+    function banner(){
+        echo <<<BANNER
         \x1b[1;36m
         \t╔══════════════════════════════════════════════════════╗
         \t║                MPF Framework CLI v 1.0.2             ║
@@ -25,6 +26,12 @@
         \t╚══════════════════════════════════════════════════════╝
         \x1b[0m
         \x1b[1mUsage:\x1b[0m
+        BANNER;
+    }
+
+    function help(){
+        banner();
+        echo <<<HELP
         \x1b[1;33m     php mpf <command>\x1b[0m
 
         \x1b[1mAvailable Commands:\x1b[0m
@@ -71,7 +78,7 @@
         loadenv();
         global $argv;
         if(isset($argv[2]) && (int)$argv[2]){
-            system("php -S 127.0.0.1:".$argv[2]." index.php");;
+            system("php -S 127.0.0.1:".$argv[2]." index.php");
         }else{
             echo "[x] something wrong with de chosen port";
             echo "[!] usage: php mpf start <port>t";
