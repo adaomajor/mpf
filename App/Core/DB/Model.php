@@ -117,10 +117,38 @@
             return $this->table;
         }
         public function up(){
+            /*
+                windows nt
+                linux 
+            */
+
+            $MODEL_PATH = realpath(__DIR__."/../../Models/".$this->table.".php");
+            $MIGRATIONS_PATH = realpath(__DIR__."/../../Models/Migrations/".$this->table);
+            if(!file_exists($MIGRATIONS_PATH)){
+                 if($_SERVER['OS'] == "Windows_NT"){
+                    system("md ".realpath(__DIR__."/../../Models/Migrations/")."\\".$this->table);
+                }else{
+                    system("mkdir ".realpath(__DIR__."/../../Models/Migrations/")."/".$this->table);
+                }
+            }
+
+            $mcontent = file_get_contents($MODEL_PATH);
+            $mfile = $MIGRATIONS_PATH."/".$this->table."/".$this->table."_migration_".date("H_i_s_d_m_Y").".php";
+            
+            file_put_contents($mfile, file_get_contents($MODEL_PATH));
+            // echo $mfile;
             self::init();
             self::$DB->exec('SET FOREIGN_KEY_CHECKS = 0');
-            self::$DB->exec('DROP TABLE IF EXISTS '.$this->table);
+            try{
+                self::$DB->exec('DROP TABLE '.$this->table);
+            }catch(Exception $ex){
+                echo "creating the table for the model ".$this->table;
+            }
+
+
+
             self::$DB->exec('SET FOREIGN_KEY_CHECKS = 1');
+
 
             $F_KEYS = [];
             try{
