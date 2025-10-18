@@ -1,12 +1,11 @@
 <?php
     namespace MPF\Core;
-
-    use Exception;
+    use MPF\core\Utils\Debug;
 
     class Res{
         public static function cookie ($cookies, $time = null , $path = "/"){
             if(!is_array($cookies)){
-                throw new Exception("the cookies argumet must be an array: ['name' => 'adaomajor']");
+                Debug("the cookies argumet must be an array: ['name' => 'adaomajor']");
             }
             foreach($cookies as $cookiename => $cookievalue){
                 if(!isset($time)){ $time = time() + 3600; }
@@ -21,11 +20,15 @@
         }
         public static function json($data){
             header("Content-Type: application/json; charset=utf8");
-            echo json_encode($data);
+            if(isset($data)){
+                echo json_encode($data);
+            }else{
+                echo "[]";
+            }            
             return;
         }
         public static function session($sessions){
-            if(!is_array($sessions)){ throw new Exception("the sessions arguments must be an array: ['name' => 'adaomajor']");}
+            if(!is_array($sessions)){ Debug("the sessions arguments must be an array: ['name' => 'adaomajor']");}
             session_start();
             foreach($sessions as $sessionKey => $sessionValue){
                 $_SESSION[$sessionKey] = $sessionValue;

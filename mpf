@@ -6,7 +6,7 @@
     * │ 📌 Desc      : mpf main file 
     * │ 👨 Author    : Adão Major (adaomajor)
     * │ 🐱‍👤 github    : https://github.com/adaomajor                   
-    * │ 🔄 Version   : 1.0.2                                     
+    * │ 🔄 Version   : 1.0.3                                    
     * │ 🧱 Framework : MPF Framework                                                                     
     * └───────────────────────────────────────────────────────────────────────
     *
@@ -20,7 +20,7 @@
         echo <<<BANNER
         \x1b[1;36m
         \t╔══════════════════════════════════════════════════════╗
-        \t║                MPF Framework CLI v 1.0.2             ║
+        \t║                MPF Framework CLI v 1.0.3             ║
         \t║           Minimal PHP Framework by adaomajor         ║
         \t║            https://github.com/adaomajor/mpf          ║
         \t╚══════════════════════════════════════════════════════╝
@@ -229,14 +229,14 @@
 
         $MODELS_PATH = __DIR__."/App/Models/";
 
-        echo "[!] migrate may delete all of your database info - [ CTRL + C ] to cancel...\n";
+        echo "[!] be careful about the changes on your database...\n";
         sleep(2);
 
         if($name){
             if(file_exists($MODELS_PATH.DIRECTORY_SEPARATOR.$name.".php")){
                 $className = "MPF\\Models\\".$name;
                 $model = new $className();
-                echo "[*] creating the table: ".$name."\n";
+                echo "[*] Migrating the talbe: ".$name."\n";
                 $model->up(); 
                 return;
             }
